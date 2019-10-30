@@ -45,26 +45,28 @@ namespace ConsoleApplication1
         //Skip any solutions with the same name which already exist.
         //So we dont overwrite solutions. To re-generate, we need to skip the file.
         static void PopulateAllCsProjAndProposedSlnFiles(string rootDir)
-        {           
-            Directory.EnumerateFiles(rootDir).Where(f => f.Trim().ToUpper().EndsWith(".CSPROJ") || f.Trim().ToUpper().EndsWith(".VBPROJ")).
-                ToList().
-                ForEach(c =>
+        {
+            foreach (var c in Directory.EnumerateFiles(rootDir).Where(f => f.Trim().ToUpper().EndsWith(".CSPROJ")))
+            {
+                if (!allCsProjAndSlnFiles.ContainsKey(c))
                 {
-                    if (!allCsProjAndSlnFiles.ContainsKey(c))
+                    var slnFile = Path.Combine(Path.GetDirectoryName(c),
+                                      Path.GetFileNameWithoutExtension(c) + ".sln");
+                    if (!File.Exists(slnFile))
                     {
-                        var slnFile = Path.Combine(Path.GetDirectoryName(c), 
-                                          Path.GetFileNameWithoutExtension(c) + ".sln");
-                        if (!File.Exists(slnFile))
-                        {
-                            allCsProjAndSlnFiles.Add(c, slnFile);
-                        }
-                        else
-                        {
-                            LogToConsole("SKIPPED " + slnFile + ", already exists. To overwrite manually delete this solution file", false);
-                        }
+                        allCsProjAndSlnFiles.Add(c, slnFile);
                     }
-                });
-            Directory.GetDirectories(rootDir).ToList().ForEach(d => PopulateAllCsProjAndProposedSlnFiles(d));
+                    else
+                    {
+                        LogToConsole("SKIPPED " + slnFile + ", already exists. To overwrite manually delete this solution file", false);
+                    }
+                }
+            }
+
+            foreach(var d in Directory.GetDirectories(rootDir))
+            {
+                PopulateAllCsProjAndProposedSlnFiles(d);
+            }
         }
 
         static void CreateSolutionFiles() {
